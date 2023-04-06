@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "teff-py"
+version = "0.1.0"
+description = ""
+authors = ["Vladimir Dikan <vdikan@vivaldi.net>"]
+readme = "README.md"
+packages = [{include = "teff_py"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+plumbum = "^1.8.1"
+pytest = "^7.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
