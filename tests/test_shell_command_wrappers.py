@@ -1,10 +1,10 @@
 from plumbum import local
 from plumbum.cmd import ls
-from teff_py.shell_command_wrapper import ShellCommandWrapperBase
+from teff_py.shell_command_wrappers import ShellCommandLocal
 
 def test_shell_command_wrapper_base_execution():
     # Assuming `ls` command is available everywhere.
-    ls_wrap = ShellCommandWrapperBase(ls, ["-lt"])
+    ls_wrap = ShellCommandLocal(ls, ["-lt"])
 
     ls_wrap.add_arg("-a")
     ls_wrap.add_arg("/tmp")

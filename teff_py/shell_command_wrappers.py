@@ -1,7 +1,7 @@
 import copy
 from plumbum import local
 
-class ShellCommandWrapperBase():
+class ShellCommandLocal():
     # A basic wrapper over shell commands.
     # Executes only once. Stores split `stdout` and `stderr`
     # in `self.out_log` and `self.error_log` vectors.
@@ -21,12 +21,7 @@ class ShellCommandWrapperBase():
         if num_mpi_procs is None:
             self.command = command
         else:
-            try:
-                cmd = command.executable
-            except AttributeError:
-                cmd = command.cmd
-            self.command = local["mpirun"]
-            self.args = ["-np", num_mpi_procs, cmd] + self.args
+            self.command = local["mpirun"]["-np", num_mpi_procs, command]
 
     def add_arg(self, arg, value=None):
         if value is not None:

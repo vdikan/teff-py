@@ -3,10 +3,10 @@
 # import copy
 from enum import Enum, auto
 from plumbum import local
-from plumbum.cmd import mkdir
+from plumbum.cmd import mkdir, pwd
 from plumbum.commands.processes import ProcessExecutionError
 
-from .shell_command_wrapper import ShellCommandWrapperBase
+from .shell_command_wrappers import ShellCommandLocal
 
 
 class State(Enum):
@@ -24,19 +24,21 @@ class ActionMeta(type):
     `required_methods`."""
 
     default_attrs = {
-        'parent_path': "",
+        'parent': None,
         'path': "",
         'num_mpi_procs': None,
         'command': None,
         'args_source': [],
-        'runner_type': type,
         'runner': None,
         'state': State.NEW,
     }
 
     required_methods = [
+        'make_prefix',
         'make_pathname',
         'make_args_list',
+        'change_state_on_prepare',
+        'change_state_on_run',
         'prepare',
         'run',
     ]
@@ -64,9 +66,10 @@ class ActionMeta(type):
         return type.__new__(mcs, name, bases, fields)
 
 
-class ActionDefault(metaclass=ActionMeta):
+class ActionLocal(metaclass=ActionMeta):
     "Default action class. Demonstrates the actions protocol compliance."
 
+    # TODO: consider turning those into properties
     # @property
     # def state(self):
     #     return copy.deepcopy(self._state)
@@ -75,37 +78,68 @@ class ActionDefault(metaclass=ActionMeta):
     # def runner(self):
     #     return copy.deepcopy(self._runner)
 
+    def make_prefix(self):
+        return self.__class__.__name__.lower()
+
     def make_pathname(self):
-        return self.parent_path + "/" + self.__class__.__name__.lower()
+        if self.parent is None:
+            return pwd().strip()
+
+        return self.parent.path + "/" + self.make_prefix()
 
     def make_args_list(self):
         return self.args_source
 
-    def __init__(self, args_source):
-        self.path = self.make_pathname()
+    def __init__(self, args_source, parent=None):
+        # First store the `args_source` collection
+        # and link to `parent` if present.
+        #
+        # Other methods used after will depend on them.
         self.args_source = args_source
-        self.runner = ShellCommandWrapperBase(
+        self.parent = parent
+
+        self.path = self.make_pathname()
+
+    @staticmethod
+    def change_state_on_prepare(f):
+        def wrapper(*args):
+            # args[0] refers to self
+            if local.path(args[0].path).exists():
+                args[0].state = State.IGNORED
+                return
+
+            mkdir("-p", args[0].path)
+            f(*args)
+            args[0].state = State.PREPARED
+
+        return wrapper
+
+    @change_state_on_prepare
+    def prepare(self):
+        pass
+
+    @staticmethod
+    def change_state_on_run(f):
+        def wrapper(*args):
+            if args[0].state == State.PREPARED:
+                f(*args)
+                if args[0].runner.exit_code != 0:
+                    args[0].state = State.FAILED
+                else:
+                    args[0].state = State.SUCCEEDED
+        return wrapper
+
+    @change_state_on_run
+    def run(self):
+        self.runner = ShellCommandLocal(
             self.command,
             self.make_args_list(),
             cwd=self.path,
             num_mpi_procs=self.num_mpi_procs,
         )
 
-    def prepare(self):
-        try:
-            mkdir(self.path)
-            self.state = State.PREPARED
-        except ProcessExecutionError:
-            self.state = State.IGNORED
-
-    def run(self):
-        assert self.state == State.PREPARED
-        self.state = State.RUNNING
-
+        # self.state = State.RUNNING
         with local.cwd(self.path):
-            self.runner.run()
-
-        if self.runner.exit_code != 0:
-            self.state = State.FAILED
-            return
-        self.state = State.SUCCEEDED
+            launch, message = self.runner.run()
+            # assert(launch)
+            # print(message)
