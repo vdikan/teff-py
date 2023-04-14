@@ -83,7 +83,7 @@ class ActionLocal(metaclass=ActionMeta):
 
     def make_pathname(self):
         if self.parent is None:
-            return pwd().strip()
+            return pwd().strip() + "/" + self.make_prefix()
 
         return self.parent.path + "/" + self.make_prefix()
 
