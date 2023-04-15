@@ -44,13 +44,13 @@ class ShellCommandLocal():
     def run(self):
         # if len(self.out_log) > 0:
         if self._exit_code is not None:
-            return False, "Command already executed!"
+            return False, "Command already executed! Skipping."
 
         cmd = self.command[self.args].with_cwd(self.cwd)
-        exit_code, stdout, stderr = cmd.run()
+        exit_code, stdout, stderr = cmd.run(retcode=None)
 
         self._exit_code = exit_code
         self._out_log = stdout.split("\n")
         self._err_log = stderr.split("\n")
 
-        return True, "Attempting command execution."
+        return True, "Attemped command execution."
