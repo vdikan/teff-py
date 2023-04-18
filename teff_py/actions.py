@@ -118,7 +118,7 @@ class ActionLocal(metaclass=ActionMeta):
             # args[0] refers to self
             if local.path(args[0].path).exists():
                 args[0].state = State.IGNORED
-                args[0].logger.warning(
+                args[0].logger.info(
                     "%-10s Action-related path exists. Skipping.",
                     State.IGNORED.name)
 
