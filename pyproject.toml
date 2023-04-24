@@ -10,6 +10,7 @@ packages = [{include = "teff_py"}]
 python = "^3.10"
 plumbum = "^1.8.1"
 pytest = "^7.2.2"
+numpy = "^1.24.3"
 
 
 [build-system]
