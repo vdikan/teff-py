@@ -1,7 +1,7 @@
 import numpy as np
 
 from plumbum import local
-from plumbum.cmd import grep, awk, tail
+from plumbum.cmd import grep, awk, head, tail
 
 
 def get_overdetermination_report(fname):
@@ -71,3 +71,15 @@ def get_elastic_constants(fname):
     data = ";".join(pipe().strip().split("\n"))
 
     return np.matrix(data, dtype=float)
+
+
+def get_rcmax(fname):
+    "`fname` is usually `infile.ssposcar`" 
+
+    alat = float((head[-2, fname] | tail[-1])().strip())
+
+    cell = (head[-5, fname] | tail[-3])().strip()
+    cell = np.matrix(";".join(cell.split("\n"))) * alat
+    rcmax = np.min(np.sqrt(np.sum(np.square(cell), axis=(1))).flatten()) * 0.5
+        
+    return rcmax
