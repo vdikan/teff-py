@@ -3,6 +3,9 @@ from teff_py.actions import ActionLocal, State
 
 class Parent():             # mock parent class
     path = "/tmp"
+    
+    def make_prefix(self):
+        return "mock_parent"
 
 def test_local_action():
     class TempAction(ActionLocal):
@@ -13,7 +16,7 @@ def test_local_action():
     ls.run()
     assert(ls.state == State.SUCCEEDED)
 
-    local["rmdir"](ls.path)     # cleanup
+    local["rm"]("-r", ls.path)     # cleanup
 
 
 def test_local_action_mpi():
@@ -26,7 +29,7 @@ def test_local_action_mpi():
     ls.run()
     assert(ls.state == State.SUCCEEDED)
 
-    local["rmdir"](ls.path)     # cleanup
+    local["rm"]("-r", ls.path)     # cleanup
 
 
 def test_bound_action():
@@ -39,7 +42,7 @@ def test_bound_action():
     ls.run()
     assert(ls.state == State.SUCCEEDED)
 
-    local["rmdir"](ls.path)     # cleanup
+    local["rm"]("-r", ls.path)     # cleanup
 
 
 def test_bound_action_mpi():
@@ -52,4 +55,4 @@ def test_bound_action_mpi():
     ls.run()
     assert(ls.state == State.SUCCEEDED)
 
-    local["rmdir"](ls.path)     # cleanup
+    local["rm"]("-r", ls.path)     # cleanup
