@@ -1,14 +1,14 @@
 from plumbum import local
-from teff_py.actions import ActionLocal, State
+from teff_py.actions import Action, State
 
 class Parent():             # mock parent class
-    path = "/tmp"
+    path = local.path("/tmp")
     
     def make_prefix(self):
         return "mock_parent"
 
 def test_local_action():
-    class TempAction(ActionLocal):
+    class TempAction(Action):
         command = local["ls"]
         
     ls = TempAction(["-a", "./"], parent=Parent())
@@ -20,7 +20,7 @@ def test_local_action():
 
 
 def test_local_action_mpi():
-    class TempAction(ActionLocal):
+    class TempAction(Action):
         num_mpi_procs = 2
         command = local["ls"]
     
@@ -33,7 +33,7 @@ def test_local_action_mpi():
 
 
 def test_bound_action():
-    class TempAction(ActionLocal):
+    class TempAction(Action):
         parent_path = "/tmp"
         command = local["ls"]["-l"]
     
@@ -46,7 +46,7 @@ def test_bound_action():
 
 
 def test_bound_action_mpi():
-    class TempAction(ActionLocal):
+    class TempAction(Action):
         num_mpi_procs = 2
         command = local["ls"]["-l"]
     

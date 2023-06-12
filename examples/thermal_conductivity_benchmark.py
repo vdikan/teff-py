@@ -7,10 +7,10 @@ import numpy as np
 from plumbum import local, cli
 from plumbum.cmd import cp, ln, pwd, mkdir, awk
 
-from teff_py.actions import ActionLocal, State
+from teff_py.actions import Action, State
 from teff_py.tdep_utils import get_rcmax, get_overdetermination_report, get_r_squared
 
-class ForceConstants(ActionLocal):
+class ForceConstants(Action):
     command = local["extract_forceconstants"]
     num_mpi_procs = 16
 
@@ -26,7 +26,7 @@ class ForceConstants(ActionLocal):
             "_", str(self.args_source["rc2"]),
         ])
 
-    @ActionLocal.change_state_on_prepare
+    @Action.change_state_on_prepare
     def prepare(self):
         files = ["forces", "meta", "positions", "ssposcar", "stat", "ucposcar"]
         for fname in files:
@@ -34,7 +34,7 @@ class ForceConstants(ActionLocal):
                self.path+"/infile."+fname)
 
 
-class PhDispRel(ActionLocal):
+class PhDispRel(Action):
     command = local["phonon_dispersion_relations"]
     num_mpi_procs = 16
 
@@ -44,7 +44,7 @@ class PhDispRel(ActionLocal):
     def make_prefix(self):
         return self.__class__.__name__.lower()
 
-    @ActionLocal.change_state_on_prepare
+    @Action.change_state_on_prepare
     def prepare(self):
         ln(self.parent.path+"/infile.ucposcar",
            self.path+"/infile.ucposcar")
@@ -52,7 +52,7 @@ class PhDispRel(ActionLocal):
            self.path+"/infile.forceconstant")
 
 
-class ThermalConductivity(ActionLocal):
+class ThermalConductivity(Action):
     command = local["thermal_conductivity"]  
     num_mpi_procs = 16
 
@@ -62,7 +62,7 @@ class ThermalConductivity(ActionLocal):
     # def make_prefix(self):
     #     return "".join([ self.__class__.__name__.lower() ])
 
-    @ActionLocal.change_state_on_prepare  # this decorator is required
+    @Action.change_state_on_prepare  # this decorator is required
     def prepare(self):
         ln(self.parent.path+"/infile.ucposcar", 
            self.path+"/infile.ucposcar")

@@ -45,7 +45,7 @@ from plumbum import local, cli
 from plumbum.cmd import cp, ln, mkdir, cat, grep, awk, tail
 
 # my workflow engine actions:
-from teff_py.actions import ActionLocal, State
+from teff_py.actions import Action, State
  
 # data-analysis package zoo imports:
 # numpy, pandas, seaborn, etc.
@@ -119,7 +119,7 @@ logging.getLogger('').addHandler(console)
 # This was a lengthy protocol explanation, but the usage is compact
 # and clear. First, we define the action for `extract_forceconstants`
 # from TDEP:
-class FCs(ActionLocal):
+class FCs(Action):
     command = local["extract_forceconstants"]  # this executable should be visible in $PATH
     num_mpi_procs = 16
 
@@ -140,7 +140,7 @@ class FCs(ActionLocal):
             "_", str(self.args_source["rc3"]),
         ])
 
-    @ActionLocal.change_state_on_prepare  # this decorator is required
+    @Action.change_state_on_prepare  # this decorator is required
     def prepare(self):
         # link the needed `infile.`-files from the example root directory above
         # (note the use of handy shell command shortcut from `plumbum`)
@@ -152,7 +152,7 @@ class FCs(ActionLocal):
 
 # And for the second stage, the action for TDEP's `thermal_conductivity` 
 # is defined according to the same template.
-class TC(ActionLocal):
+class TC(Action):
     command = local["thermal_conductivity"]  # this executable should be visible in $PATH
     num_mpi_procs = 16
 
@@ -178,7 +178,7 @@ class TC(ActionLocal):
             ".", str(self.args_source["qg"]),
         ])
 
-    @ActionLocal.change_state_on_prepare  # this decorator is required
+    @Action.change_state_on_prepare  # this decorator is required
     def prepare(self):
         # link ucposcar from the parent calculation
         ln(self.parent.path+"/infile.ucposcar", 

@@ -11,7 +11,7 @@ from plumbum import local, cli
 from plumbum.cmd import cp, ln, mkdir, cat, pwd, head, tail, awk, echo, grep
 
 # my workflow engine actions:
-from teff_py.actions import ActionLocal, State
+from teff_py.actions import Action, State
 
 # Materials Project API
 from mp_api.client import MPRester
@@ -45,7 +45,7 @@ logging.getLogger('').addHandler(console)
 
 
 # Definitions for Workflow Actions.
-class GenStruct(ActionLocal):
+class GenStruct(Action):
     "Supercell generation stage from incoming structure."
     command = local["generate_structure"]
     num_mpi_procs = 2
@@ -54,14 +54,14 @@ class GenStruct(ActionLocal):
         structure = self.args_source["structure"]
         return ["-na", len(structure)*16] # hard-coded SC size
 
-    @ActionLocal.change_state_on_prepare  # this decorator is required
+    @Action.change_state_on_prepare  # this decorator is required
     def prepare(self):
         # link ucposcar that was downloaded from MP
         ln(self.path+"/../infile.ucposcar",
            self.path+"/infile.ucposcar")
 
 
-class CanConf(ActionLocal):
+class CanConf(Action):
     "Canonical configuration stage inside of the main convergence iteration."
     command = local["canonical_configuration"]
     num_mpi_procs = None  # force non-MPI job
@@ -78,7 +78,7 @@ class CanConf(ActionLocal):
                 "-td", self.args_source["td"],
                 "-of", 5]       # generate configuration for SIESTA
 
-    @ActionLocal.change_state_on_prepare
+    @Action.change_state_on_prepare
     def prepare(self):
         ln(self.parent.path+"/infile.ucposcar",
            self.path+"/infile.ucposcar")
@@ -86,7 +86,7 @@ class CanConf(ActionLocal):
            self.path+"/infile.ssposcar")
 
 
-class SpSiesta(ActionLocal):
+class SpSiesta(Action):
     "Single-point configuration processing with SIESTA."
     command = ["siesta"]
     num_mpi_procs = 16
@@ -100,7 +100,7 @@ class SpSiesta(ActionLocal):
     def make_args_list(self):
         return [self.path+"/siesta_conf"+("%04d" % self.args_source["nc"])]
 
-    @ActionLocal.change_state_on_prepare
+    @Action.change_state_on_prepare
     def prepare(self):
         list(map(lambda fname: ln(self.parent.path+fname, self.path+fname),
                  ["/siesta_conf"+("%04d" % self.args_source["nc"]),
@@ -112,7 +112,7 @@ class SpSiesta(ActionLocal):
                    self.path+"/"+specie.name+".psf")
 
 
-class FCs(ActionLocal):
+class FCs(Action):
     "Extract forceconstants from SIESTA calculations with TDEP."
     command = ["extract_forceconstants"]
     num_mpi_procs = 2
@@ -123,7 +123,7 @@ class FCs(ActionLocal):
         # from it we build a list of switches and args to our shell command:
         return [ "-rc2", 5.0, "-rc3", 4.0 ]
 
-    @ActionLocal.change_state_on_prepare
+    @Action.change_state_on_prepare
     def prepare(self):
         list(map(lambda fname: ln(self.parent.path+"/"+fname, self.path+"/"+fname),
                  ["infile.ssposcar", "infile.ucposcar"]))
@@ -173,7 +173,7 @@ class FCs(ActionLocal):
             (echo[line] >> self.path+"/infile.stat")()  
             
 
-class TC(ActionLocal):
+class TC(Action):
     command = local["thermal_conductivity"]  # this executable should be visible in $PATH
     num_mpi_procs = 16
 
@@ -184,7 +184,7 @@ class TC(ActionLocal):
             "--temperature", str(300)
         ]
 
-    @ActionLocal.change_state_on_prepare  # this decorator is required
+    @Action.change_state_on_prepare  # this decorator is required
     def prepare(self):
         # link ucposcar from the parent calculation
         ln(self.parent.path+"/infile.ucposcar", 

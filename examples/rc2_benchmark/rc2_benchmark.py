@@ -10,7 +10,7 @@ from plumbum import local, cli
 from plumbum.cmd import cp, ln, pwd, mkdir
 from plumbum.cmd import grep, awk, head, tail
 
-from teff_py.actions import ActionLocal, State
+from teff_py.actions import Action, State
 from teff_py.tdep_utils import get_rcmax, get_overdetermination_report, get_r_squared
 
 ### Utility functions definitions
@@ -42,7 +42,7 @@ def read_end_path_kpoint(fname):
     return path_line.strip().split()[-1]
 
 ### Workflow stage specifications
-class ForceConstants(ActionLocal):
+class ForceConstants(Action):
     command = local["extract_forceconstants"]
     num_mpi_procs = 16
 
@@ -58,7 +58,7 @@ class ForceConstants(ActionLocal):
             ("%04d" % self.args_source["stride"]),
         ])
 
-    @ActionLocal.change_state_on_prepare
+    @Action.change_state_on_prepare
     def prepare(self):
         files = ["forces", "meta", "positions", "ssposcar", "stat", "ucposcar"]
         for fname in files:
@@ -66,7 +66,7 @@ class ForceConstants(ActionLocal):
                self.path+"/infile."+fname)
 
 
-class PhDispRel(ActionLocal):
+class PhDispRel(Action):
     command = local["phonon_dispersion_relations"]
     num_mpi_procs = 16
 
@@ -76,7 +76,7 @@ class PhDispRel(ActionLocal):
     def make_prefix(self):
         return self.__class__.__name__.lower()
 
-    @ActionLocal.change_state_on_prepare
+    @Action.change_state_on_prepare
     def prepare(self):
         ln(self.parent.path+"/infile.ucposcar",
            self.path+"/infile.ucposcar")
