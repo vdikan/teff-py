@@ -27,23 +27,10 @@ class ShellCommandRunner():
         self._out_log = []
         self._err_log = []
 
-        #DEPRECATED
-        # try:
-        #     self.args = command.args + args
-        # except AttributeError:
-        #     self.args = args
-
         self.args = args
         self.cwd = cwd
 
         self.command = command
-        #DEPRECATED
-        # self.num_mpi_procs = num_mpi_procs
-        # if num_mpi_procs is None:
-        #     self.command = command
-        # else:
-        #     machine = command.machine
-        #     self.command = machine["mpirun"]["-np", num_mpi_procs, command]
 
     def add_arg(self, arg, value=None):
         if value is not None:
@@ -96,7 +83,6 @@ class ActionMeta(type):
 
     required_methods = [
         'make_prefix',
-        #DEPRECATED 'make_pathname',
         'make_path',
         'make_args_list',
         'change_state_on_prepare',
@@ -232,14 +218,7 @@ class Action(metaclass=ActionMeta):
                     args[0].logger.error(
                         "%-10s Action command execution resulted in non-zero exit code.",
                         State.FAILED.name)
-                    #DEPRECATED err_path = op.join(args[0].path, "err.log")
                     err_path = args[0].path / "err.log"
-                    #DEPRECATED
-                    # with open(err_path, "w") as err:
-                    #     err.write("\n".join(args[0].runner.err_log))
-                    #REVIEW
-                    # (machine["echo"]["-n", args[0].runner.err_log] |
-                    #  machine["tee"][err_path])()
                     session.run("echo -n \"%s\" | tee %s" %
                                 ("\n".join(args[0].runner.err_log), err_path))
                     args[0].logger.error("Error log written at: %s", err_path)
@@ -248,14 +227,7 @@ class Action(metaclass=ActionMeta):
                     # Action command successfully executed.
                     args[0].logger.info("%-10s", State.SUCCEEDED.name)
 
-                #DEPRECATED out_path = op.join(args[0].path, "out.log")
                 out_path = args[0].path / "out.log"
-                #DEPRECATED
-                # with open(out_path, "w") as out:
-                #     out.write("\n".join(args[0].runner.out_log))
-                #REVIEW
-                # (machine["echo"]["-n", args[0].runner.out_log] |
-                #  machine["tee"][out_path])()
                 session.run("echo -n \"%s\" | tee %s" %
                             ("\n".join(args[0].runner.out_log), out_path))
                 args[0].logger.debug("Output written at: %s", out_path)
