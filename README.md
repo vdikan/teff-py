@@ -9,4 +9,4 @@
 
     Part of the THERMOS project.
 
-    Early development stage.
+    Development stage.
